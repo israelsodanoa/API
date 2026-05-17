@@ -1,0 +1,20 @@
+{
+  "name": "api-stories-load-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Load testing suite for API.Stories using Artillery",
+  "scripts": {
+    "test:smoke": "artillery run --environment smoke ./artillery/topk-load-test.yml",
+    "test:baseline": "artillery run --environment baseline ./artillery/topk-load-test.yml",
+    "test:spike": "artillery run --environment spike ./artillery/topk-load-test.yml",
+    "test:soak": "artillery run --environment soak ./artillery/topk-load-test.yml",
+    "test:all": "npm run test:smoke && npm run test:baseline && npm run test:spike",
+    "test:baseline:report": "artillery run --environment baseline --output ./reports/baseline-report.json ./artillery/topk-load-test.yml",
+    "test:spike:report": "artillery run --environment spike --output ./reports/spike-report.json ./artillery/topk-load-test.yml"
+  },
+  "devDependencies": {
+    "@smithy/config-resolver": "^4.5.3",
+    "@smithy/node-config-provider": "^4.4.3",
+    "artillery": "^2.0.31"
+  }
+}

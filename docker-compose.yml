@@ -1,0 +1,19 @@
+services:
+  redis:
+    image: redis:latest
+    restart: always
+    ports:
+      - 6379:6379
+
+  api-stories:
+    build:
+      context: ./API.Stories
+      dockerfile: Dockerfile
+    restart: always
+    depends_on:
+      - redis
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:80
+    ports:
+      - 5038:80

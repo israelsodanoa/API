@@ -1,0 +1,76 @@
+config:
+  target: "http://localhost:5038"
+  processor: "./processor.cjs"
+  plugins:
+    metrics-by-endpoint:
+      useOnlyRequestNames: true
+    ensure:
+      conditions:
+        - expression: "http.responses > 0"
+        - expression: "http.codes.200 / http.responses >= 0.95"
+        - expression: "http.response_time.p95 < 2000"
+        - expression: "http.response_time.p99 < 4000"
+  defaults:
+    headers:
+      Accept: "application/json"
+      x-api-version: "1.0"
+  environments:
+    smoke:
+      phases:
+        - duration: 20
+          arrivalRate: 1
+          name: "Smoke ramp"
+    baseline:
+      phases:
+        - duration: 30
+          arrivalRate: 2
+          rampTo: 8
+          name: "Warm-up"
+        - duration: 90
+          arrivalRate: 8
+          rampTo: 20
+          name: "Steady load"
+    spike:
+      phases:
+        - duration: 30
+          arrivalRate: 3
+          rampTo: 10
+          name: "Ramp-up"
+        - duration: 30
+          arrivalRate: 35
+          rampTo: 80
+          name: "Spike"
+        - duration: 30
+          arrivalRate: 10
+          name: "Cool-down"
+    soak:
+      phases:
+        - duration: 120
+          arrivalRate: 8
+          name: "Soak"
+
+scenarios:
+  - name: "TopK mixed profile"
+    weight: 80
+    flow:
+      - function: "pickTopK"
+      - get:
+          name: "GET /api/v1/topk/:topk"
+          url: "/api/v1/topk/{{ topk }}"
+          afterResponse:
+            - "validateTopKResponse"
+            - "recordStoryCount"
+      - think: 1
+
+  - name: "Hot path pressure (topk=30)"
+    weight: 20
+    flow:
+      - loop:
+          - get:
+              name: "GET /api/v1/topk/30"
+              url: "/api/v1/topk/30"
+              afterResponse:
+                - "validateTopKResponse"
+                - "recordStoryCount"
+          - think: 0.5
+        count: 3
